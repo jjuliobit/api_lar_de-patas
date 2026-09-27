@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  nome      String
+  sobrenome String
+  idade     Int
+  email     String   @unique
+  sexo      Sexo
+  cpf       String   @unique
+  foto      String?
+
+  account   Account?
+  sessions  Session[]
+  pets      Pet[]
+  address   Address?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Pet {
+  id        String   @id @default(uuid())
+  userId    String
+  nome      String
+  idade     Int
+  sexo      SexoPet
+  especie   Especie
+  raca      String?
+  cor       String?
+  foto      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  cep         String?
+  logradouro  String
+  numero      String
+  complemento String?
+  bairro      String?
+  cidade      String
+  estado      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Sexo {
+  Feminino
+  Masculino
+}
+
+enum SexoPet {
+  Macho
+  Femea
+}
+
+enum Especie {
+  Cachorro
+  Gato
+  Passaro
+  Outro
+}
