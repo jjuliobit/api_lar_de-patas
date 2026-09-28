@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
+import { CreatePetDto } from './dto/create-pet.dto';
+import { UpdatePetDto } from './dto/update-pet.dto';
 
 @Injectable()
 export class PetService {
@@ -8,7 +10,7 @@ export class PetService {
     private readonly databaseService: DatabaseService
   ) { }
 
-  async create(createPetDto: Prisma.PetUncheckedCreateInput) {
+  async create(createPetDto: CreatePetDto) {
     try {
       const pet = await this.databaseService.pet.create({
         data: createPetDto
@@ -55,7 +57,7 @@ export class PetService {
     }
   }
 
-  async update(id: string, updatePetDto: Prisma.PetUpdateInput) {
+  async update(id: string, updatePetDto: UpdatePetDto) {
     try {
       const pet = await this.databaseService.pet.update({
         where: { id },
