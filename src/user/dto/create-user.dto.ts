@@ -10,6 +10,10 @@ export class CreateUserDto implements Prisma.UserCreateInput {
   @IsNotEmpty({ message: 'O sobrenome é obrigatório.' })
   sobrenome: string;
 
+  @IsString()
+  @IsOptional()
+  telefone?: string | null;
+
   @IsInt({ message: 'A idade deve ser um número inteiro.' })
   @Min(0, { message: 'A idade deve ser maior ou igual a 0.' })
   @IsNotEmpty({ message: 'A idade é obrigatória.' })
