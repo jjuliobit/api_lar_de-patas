@@ -2,24 +2,22 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import * as bcrypt from 'bcrypt'
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly databaseService: DatabaseService
   ) { }
-  async create(createUserDto: Prisma.UserCreateInput) {
+  async create(createUserDto: CreateUserDto) {
     try {
-      const passwordHash = await bcrypt.hash(createUserDto.account?.create?.passwordHash ?? '', 6)
+      const { password, ...userData } = createUserDto;
+      const passwordHash = await bcrypt.hash(password, 6);
+
       const user = await this.databaseService.user.create({
         data: {
-          nome: createUserDto.nome,
-          sobrenome: createUserDto.sobrenome,
-          idade: createUserDto.idade,
-          email: createUserDto.email,
-          sexo: createUserDto.sexo,
-          cpf: createUserDto.cpf,
-
+          ...userData,
           account: {
             create: {
               passwordHash
@@ -76,15 +74,10 @@ export class UserService {
     }
   }
 
-  async update(id: string, updateUserDto: Prisma.UserUpdateInput) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.databaseService.user.update({
       where: { id },
-      data: {
-        nome: updateUserDto.nome,
-        sobrenome: updateUserDto.sobrenome,
-        idade: updateUserDto.idade,
-        foto: updateUserDto?.foto
-      }
+      data: updateUserDto
     })
 
 
