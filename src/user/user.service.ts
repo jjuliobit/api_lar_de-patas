@@ -12,7 +12,7 @@ export class UserService {
   ) { }
   async create(createUserDto: CreateUserDto) {
     try {
-      const { password, ...userData } = createUserDto;
+      const { password, address, ...userData } = createUserDto;
       const passwordHash = await bcrypt.hash(password, 6);
 
       const user = await this.databaseService.user.create({
@@ -22,7 +22,13 @@ export class UserService {
             create: {
               passwordHash
             }
+          },
+          address: {
+            create: address
           }
+        },
+        include: {
+          address: true
         }
       })
 
@@ -44,6 +50,7 @@ export class UserService {
           }
         }
       }
+      throw error;
     }
   }
 

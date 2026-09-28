@@ -1,7 +1,9 @@
-import { Prisma, Sexo } from '@prisma/client';
-import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUrl, Min, MinLength } from 'class-validator';
+import { Sexo } from '@prisma/client';
+import { Type } from 'class-transformer';
+import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, IsUrl, Min, MinLength, ValidateNested } from 'class-validator';
+import { CreateAddressDto } from './create-address.dto';
 
-export class CreateUserDto implements Prisma.UserCreateInput {
+export class CreateUserDto {
   @IsString()
   @IsNotEmpty({ message: 'O nome é obrigatório.' })
   nome: string;
@@ -40,4 +42,10 @@ export class CreateUserDto implements Prisma.UserCreateInput {
   @IsNotEmpty({ message: 'A senha é obrigatória.' })
   @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres.' })
   password: string;
+
+  @IsObject({ message: 'O endereço deve ser um objeto válido.' })
+  @ValidateNested()
+  @Type(() => CreateAddressDto)
+  @IsNotEmpty({ message: 'O endereço é obrigatório.' })
+  address: CreateAddressDto;
 }
