@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { PetService } from './pet.service';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { CreatePetDto } from './dto/create-pet.dto';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('pet')
+@UseGuards(AuthGuard)
 export class PetController {
   constructor(private readonly petService: PetService) {}
 

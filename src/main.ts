@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -9,10 +10,14 @@ async function bootstrap() {
 
   // Prefixos e CORS
   app.setGlobalPrefix('api');
-  app.enableCors();
+  app.enableCors({
+    origin: true, // Em produção, especifique o domínio
+    credentials: true, // Permite envio de cookies
+  });
 
   // Segurança
   app.use(helmet());
+  app.use(cookieParser()); // Habilita parsing de cookies
 
   // Validação Global
   app.useGlobalPipes(
