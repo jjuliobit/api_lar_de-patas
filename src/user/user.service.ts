@@ -89,6 +89,7 @@ export class UserService {
 
 
     return {
+      user,
       mensagem: `O usurio de ${user.nome} foram atualizados`
     }
   }

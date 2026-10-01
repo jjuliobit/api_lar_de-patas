@@ -7,10 +7,13 @@ import {
   HttpStatus,
   Req,
   Get,
+  UseGuards,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
+import { AuthGuard } from './guards/auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateAuthDto } from './dto/create-auth.dto';
 
 @Controller('auth')
@@ -85,17 +88,8 @@ export class AuthController {
   }
 
   @Get('me')
-  async getProfile(@Req() request: Request) {
-    const sessionId = request.cookies?.sessionId;
-
-    if (!sessionId) {
-      throw new UnauthorizedException('Nenhuma sessão ativa');
-    }
-
-    const { user } = await this.authService.validateSession(sessionId);
-
-    return {
-      user,
-    };
+  @UseGuards(AuthGuard)
+  async getProfile(@CurrentUser() user: unknown) {
+    return { user };
   }
 }

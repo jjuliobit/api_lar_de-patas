@@ -74,6 +74,7 @@ export class AuthService {
             sexo: true,
             cpf: true,
             foto: true,
+            createdAt: true,
           },
         },
       },
