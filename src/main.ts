@@ -15,6 +15,10 @@ async function bootstrap() {
     credentials: true, // Permite envio de cookies
   });
 
+  // Confia em cabeçalhos de proxy (X-Forwarded-Proto) para saber se a
+  // conexão é HTTPS. Sem isso, `request.protocol` fica sempre 'http'.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   // Segurança
   app.use(helmet());
   app.use(cookieParser()); // Habilita parsing de cookies
