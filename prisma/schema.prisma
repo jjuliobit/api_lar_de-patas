@@ -8,23 +8,25 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   nome      String
   sobrenome String
   telefone  String?
   idade     Int
-  email     String   @unique
+  email     String  @unique
   sexo      Sexo
-  cpf       String   @unique
+  cpf       String  @unique
   foto      String?
 
-  account   Account?
-  sessions  Session[]
-  pets      Pet[]
-  address   Address?
+  account  Account?
+  sessions Session[]
+  pets     Pet[]
+  address  Address?
+  adoptions Adoption[]
+  lostPets  LostPet[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Account {
@@ -49,15 +51,64 @@ model Session {
 }
 
 model Pet {
-  id        String   @id @default(uuid())
-  userId    String
-  nome      String
-  idade     Int
-  sexo      SexoPet
-  especie   Especie
-  raca      String?
-  cor       String?
-  foto      String?
+  id          String    @id @default(uuid())
+  userId      String
+  nome        String
+  idade       Int
+  sexo        SexoPet
+  especie     Especie
+  raca        String?
+  cor         String?
+  foto        String?
+  descricao   String?
+  localizacao String?
+  status      StatusPet @default(Disponivel)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adocoes Adoption[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([especie])
+}
+
+model Adoption {
+  id          String       @id @default(uuid())
+  petId       String
+  userId      String
+  status      StatusAdocao @default(Enviado)
+  observacoes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pet  Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([petId, userId])
+  @@index([userId])
+  @@index([petId])
+}
+
+model LostPet {
+  id            String          @id @default(uuid())
+  userId        String
+  nome          String
+  especie       Especie
+  sexo          SexoPetPerdido?
+  raca          String?
+  cor           String?
+  localizacao   String
+  dataUltimaVez DateTime
+  descricao     String?
+  foto          String?
+  encontrado    Boolean         @default(false)
+
+  nomeContato     String
+  telefoneContato String
+  emailContato    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -65,11 +116,13 @@ model Pet {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([encontrado])
+  @@index([especie])
 }
 
 model Address {
-  id          String   @id @default(uuid())
-  userId      String   @unique
+  id          String  @id @default(uuid())
+  userId      String  @unique
   cep         String?
   logradouro  String
   numero      String
@@ -99,4 +152,24 @@ enum Especie {
   Gato
   Passaro
   Outro
+}
+
+enum StatusPet {
+  Disponivel
+  EmProcesso
+  Adotado
+  Indisponivel
+}
+
+enum StatusAdocao {
+  Enviado
+  Analisando
+  Aprovado
+  Rejeitado
+  Concluido
+}
+
+enum SexoPetPerdido {
+  Macho
+  Femea
 }
