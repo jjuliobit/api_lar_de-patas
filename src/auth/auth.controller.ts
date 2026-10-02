@@ -15,6 +15,7 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -54,7 +55,6 @@ export class AuthController {
     });
 
     return {
-      mensagem: 'Login realizado com sucesso',
       user: result.user,
       expiresAt: result.expiresAt,
     };
@@ -91,5 +91,30 @@ export class AuthController {
   @UseGuards(AuthGuard)
   async getProfile(@CurrentUser() user: unknown) {
     return { user };
+  }
+
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  async register(
+    @Body() createUserDto: CreateUserDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.register(createUserDto);
+
+    // Mesmo cookie e mesmas opções do login, com as mesmas opções o
+    // navegador consegue limpar o cookie no logout.
+    response.cookie('sessionId', result.sessionId, {
+      httpOnly: true,
+      secure: this.isSecureRequest(request),
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return {
+      mensagem: result.mensagem,
+      user: result.user,
+      expiresAt: result.expiresAt,
+    };
   }
 }

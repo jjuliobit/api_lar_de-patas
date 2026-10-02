@@ -2,14 +2,34 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
+
+  /**
+   * Cria a sessão do usuário. Centralizado porque login e register
+   * precisam emitir o mesmo cookie com a mesma expiração.
+   */
+  private async createSession(userId: string) {
+    // Expira em 15 minutos
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+    return this.databaseService.session.create({
+      data: {
+        userId,
+        expiresAt,
+      },
+    });
+  }
 
   async login(createAuthDto: CreateAuthDto) {
     const { email, senha } = createAuthDto;
@@ -36,16 +56,7 @@ export class AuthService {
       throw new UnauthorizedException('Email ou senha inválidos');
     }
 
-    // Criar sessão (expira em 15 minutos)
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
-
-    const session = await this.databaseService.session.create({
-      data: {
-        userId: user.id,
-        expiresAt,
-      },
-    });
+    const session = await this.createSession(user.id);
 
     return {
       sessionId: session.id,
@@ -111,5 +122,62 @@ export class AuthService {
     } catch (error) {
       throw new NotFoundException('Sessão não encontrada');
     }
+  }
+
+
+  async register(createUserDto: CreateUserDto) {
+    try {
+      const { password, address, ...userData } = createUserDto;
+      const passwordHash = await bcrypt.hash(password, 6);
+
+      const user = await this.databaseService.user.create({
+        data: {
+          ...userData,
+          account: {
+            create: {
+              passwordHash
+            }
+          },
+          address: {
+            create: address
+          }
+        },
+        include: {
+          address: true
+        }
+      })
+
+      // Abre sessão junto com o cadastro, para o usuário não ter
+      // que digitar e-mail e senha logo em seguida.
+      const session = await this.createSession(user.id);
+
+      return {
+        sessionId: session.id,
+        user: {
+          id: user.id,
+          nome: user.nome,
+          sobrenome: user.sobrenome,
+          email: user.email,
+        },
+        expiresAt: session.expiresAt
+      }
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const field = error.meta?.target
+        if (Array.isArray(field)) {
+
+          if (field?.includes('cpf')) {
+            throw new ConflictException('CPF já cadastrado')
+          }
+
+          if (field?.includes('email')) {
+            throw new ConflictException('E-mail já cadastrado')
+          }
+        }
+      }
+      throw error;
+    }
+
+
   }
 }
