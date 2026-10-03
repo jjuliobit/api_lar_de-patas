@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { PetService } from './pet.service';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { PaginationQueryDto } from './dto/pagination-querry.dto';
 
 @Controller('pet')
 @UseGuards(AuthGuard)
@@ -15,8 +16,8 @@ export class PetController {
   }
 
   @Get()
-  findAll() {
-    return this.petService.findAll();
+  findAll(@Query() paginationQueryDto: PaginationQueryDto) {
+    return this.petService.findAll(paginationQueryDto);
   }
 
   @Get(':id')

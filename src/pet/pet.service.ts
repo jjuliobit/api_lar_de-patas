@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
+import { PaginationQueryDto } from './dto/pagination-querry.dto';
 
 @Injectable()
 export class PetService {
@@ -27,22 +28,39 @@ export class PetService {
     }
   }
 
-  async findAll() {
-    const pets = await this.databaseService.pet.findMany({
-      include: {
-        user: true
-      }
-    })
+  async findAll(paginationQueryDto: PaginationQueryDto) {
+    const page = paginationQueryDto.page || 1;
+    const limit = paginationQueryDto.limit || 10;
+    const skip = (page - 1) * limit;
 
-    if (pets.length == 0) {
-      throw new NotFoundException('Pets não encontrados')
-    }
+    const [pets, totalItems] = await this.databaseService.$transaction([
+      this.databaseService.pet.findMany({
+        include: {
+          user: true,
+        },
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.databaseService.pet.count(),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
 
     return {
-      pets
-    }
+      data: pets,
+      meta: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    };
   }
-
   async findOne(id: string) {
     const pets = await this.databaseService.pet.findUnique({
       where: { id }
