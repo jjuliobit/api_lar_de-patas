@@ -112,7 +112,6 @@ export class AuthController {
     });
 
     return {
-      mensagem: result.mensagem,
       user: result.user,
       expiresAt: result.expiresAt,
     };
