@@ -1,27 +1,34 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
+import { UPLOAD_ROOT, PET_PHOTO_DIR, PET_PHOTO_SERVE_ROOT } from './upload/upload.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Prefixos e CORS
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: true, // Em produção, especifique o domínio
-    credentials: true, // Permite envio de cookies
+    origin: true,
+    credentials: true,
   });
 
-  // Confia em cabeçalhos de proxy (X-Forwarded-Proto) para saber se a
-  // conexão é HTTPS. Sem isso, `request.protocol` fica sempre 'http'.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   // Segurança
-  app.use(helmet());
-  app.use(cookieParser()); // Habilita parsing de cookies
+  app.use(
+    helmet({
+      // As fotos são servidas em outra porta/origem que o front. Com a
+      // política padrão (same-origin) o navegador bloqueia a exibição.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+  app.use(cookieParser());
 
   // Validação Global
   app.useGlobalPipes(
@@ -32,10 +39,16 @@ async function bootstrap() {
     }),
   );
 
+  mkdirSync(PET_PHOTO_DIR, { recursive: true });
+  app.useStaticAssets(UPLOAD_ROOT, {
+    prefix: `${PET_PHOTO_SERVE_ROOT}/`,
+  });
+
   // Documentação
   const config = new DocumentBuilder()
     .setTitle('API Lar de Patas')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
@@ -44,5 +57,6 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Aplicação rodando em: http://localhost:${port}/api`);
   console.log(`Documentação rodando em: http://localhost:${port}/docs`);
+  console.log(`Uploads servidos em: http://localhost:${port}${PET_PHOTO_SERVE_ROOT}/`);
 }
 bootstrap();

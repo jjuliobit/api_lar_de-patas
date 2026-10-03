@@ -1,4 +1,5 @@
 import { Especie, Prisma, SexoPet } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
@@ -8,11 +9,13 @@ import {
   Min,
 } from 'class-validator';
 
+
 export class CreatePetDto implements Prisma.PetUncheckedCreateInput {
   @IsString()
   @IsNotEmpty({ message: 'O nome do pet é obrigatório.' })
   nome: string;
 
+  @Type(() => Number)
   @IsInt({ message: 'A idade deve ser um número inteiro.' })
   @Min(0, { message: 'A idade deve ser maior ou igual a 0.' })
   @IsNotEmpty({ message: 'A idade é obrigatória.' })
@@ -40,7 +43,11 @@ export class CreatePetDto implements Prisma.PetUncheckedCreateInput {
 
   @IsString()
   @IsOptional()
-  foto?: string | null;
+  descricao?: string | null;
+
+  @IsString()
+  @IsOptional()
+  localizacao?: string | null;
 
   @IsString()
   @IsNotEmpty({ message: 'O ID do usuário (userId) é obrigatório.' })
