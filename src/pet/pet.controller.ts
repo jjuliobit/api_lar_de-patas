@@ -21,10 +21,10 @@ import { PaginationQueryDto } from './dto/pagination-querry.dto';
 import { petPhotoMulterOptions } from 'src/upload/upload.config';
 
 @Controller('pet')
-@UseGuards(AuthGuard)
 export class PetController {
   constructor(private readonly petService: PetService) {}
 
+  @UseGuards(AuthGuard)
   @Post()
   @UseInterceptors(FileInterceptor('foto', petPhotoMulterOptions))
   @ApiConsumes('multipart/form-data')
@@ -63,11 +63,13 @@ export class PetController {
     return this.petService.findOne(id);
   }
 
+  @UseGuards(AuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
     return this.petService.update(id, updatePetDto);
   }
 
+  @UseGuards(AuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.petService.remove(id);
