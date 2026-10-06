@@ -50,6 +50,10 @@ export class CreatePetDto implements Prisma.PetUncheckedCreateInput {
   localizacao?: string | null;
 
   @IsString()
+  @IsOptional()
+  status?: string | null;
+
+  @IsString()
   @IsNotEmpty({ message: 'O ID do usuário (userId) é obrigatório.' })
   userId: string;
 }
