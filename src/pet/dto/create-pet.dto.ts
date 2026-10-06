@@ -1,4 +1,4 @@
-import { Especie, Prisma, SexoPet } from '@prisma/client';
+import { Especie, Prisma, SexoPet, StatusPet } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -51,7 +51,8 @@ export class CreatePetDto implements Prisma.PetUncheckedCreateInput {
 
   @IsString()
   @IsOptional()
-  status?: string | null;
+  @IsEnum(StatusPet)
+  status?: StatusPet;
 
   @IsString()
   @IsNotEmpty({ message: 'O ID do usuário (userId) é obrigatório.' })
