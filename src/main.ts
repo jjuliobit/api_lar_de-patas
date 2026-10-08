@@ -6,7 +6,12 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
-import { UPLOAD_ROOT, PET_PHOTO_DIR, PET_PHOTO_SERVE_ROOT } from './upload/upload.config';
+import {
+  UPLOAD_ROOT,
+  PET_PHOTO_DIR,
+  LOST_PET_PHOTO_DIR,
+  UPLOAD_PUBLIC_PREFIX,
+} from './upload/upload.config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -40,8 +45,9 @@ async function bootstrap() {
   );
 
   mkdirSync(PET_PHOTO_DIR, { recursive: true });
+  mkdirSync(LOST_PET_PHOTO_DIR, { recursive: true });
   app.useStaticAssets(UPLOAD_ROOT, {
-    prefix: `${PET_PHOTO_SERVE_ROOT}/`,
+    prefix: `${UPLOAD_PUBLIC_PREFIX}/`,
   });
 
   // Documentação
@@ -57,6 +63,6 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Aplicação rodando em: http://localhost:${port}/api`);
   console.log(`Documentação rodando em: http://localhost:${port}/docs`);
-  console.log(`Uploads servidos em: http://localhost:${port}${PET_PHOTO_SERVE_ROOT}/`);
+  console.log(`Uploads servidos em: http://localhost:${port}${UPLOAD_PUBLIC_PREFIX}/`);
 }
 bootstrap();

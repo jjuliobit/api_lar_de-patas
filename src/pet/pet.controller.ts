@@ -18,7 +18,7 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { PaginationQueryDto } from './dto/pagination-querry.dto';
-import { petPhotoMulterOptions } from 'src/upload/upload.config';
+import { imageUploadOptions } from 'src/upload/upload.config';
 
 @Controller('pet')
 export class PetController {
@@ -26,7 +26,7 @@ export class PetController {
 
   @UseGuards(AuthGuard)
   @Post()
-  @UseInterceptors(FileInterceptor('foto', petPhotoMulterOptions))
+  @UseInterceptors(FileInterceptor('foto', imageUploadOptions))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {

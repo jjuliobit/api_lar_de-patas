@@ -2,22 +2,26 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateLostPetDto } from './dto/create-lost-pet.dto';
 import { UpdateLostPetDto } from './dto/update-lost-pet.dto';
 import { DatabaseService } from 'src/database/database.service';
+import { LOST_PET_PHOTO_SUBDIR } from 'src/upload/upload.config';
+import { deleteUploadedPhoto, saveUploadedImage } from 'src/upload/photo-storage';
 
 @Injectable()
 export class LostPetsService {
   constructor(private readonly databaseService: DatabaseService) { }
-  async create(createLostPetDto: CreateLostPetDto) {
+  async create(createLostPetDto: CreateLostPetDto, file?: Express.Multer.File) {
+    const foto = file
+      ? await saveUploadedImage(LOST_PET_PHOTO_SUBDIR, file)
+      : null;
+
     try {
-      const lostPet = await this.databaseService.lostPet.create({
+      return await this.databaseService.lostPet.create({
         data: {
           ...createLostPetDto,
-          userId: createLostPetDto.userId,
-        }
-      })
-
-      return lostPet;
-
+          foto,
+        },
+      });
     } catch (error) {
+      await deleteUploadedPhoto(foto);
       throw error;
     }
   }
@@ -47,6 +51,16 @@ export class LostPetsService {
     try {
       const lostPet = await this.databaseService.lostPet.findUnique({
         where: { id },
+        include: {
+          user: {
+            select: {
+              nome: true,
+              sobrenome: true,
+              email: true,
+              telefone: true,
+            }
+          }
+        }
       })
 
       if (!lostPet) {
@@ -86,6 +100,8 @@ export class LostPetsService {
     if (!lostPet) {
       throw new NotFoundException('Animal perdido não encontrado');
     }
+
+    await deleteUploadedPhoto(lostPet.foto);
 
     return {
       mensagem: 'Animal perdido removido com sucesso'

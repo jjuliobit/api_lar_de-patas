@@ -8,7 +8,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateLostPetDto {
   @IsString()
@@ -48,10 +48,12 @@ export class CreateLostPetDto {
   @IsOptional()
   descricao?: string | null;
 
-  @IsString()
-  @IsOptional()
-  foto?: string | null;
-
+  @Transform(({ value }) => {
+    if (value === '' || value === undefined || value === null) return undefined;
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   @IsBoolean()
   @IsOptional()
   encontrado?: boolean;
