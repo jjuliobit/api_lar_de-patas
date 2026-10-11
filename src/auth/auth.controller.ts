@@ -46,11 +46,13 @@ export class AuthController {
   ) {
     const result = await this.authService.login(createAuthDto);
 
+    const isSecure = this.isSecureRequest(request);
+
     // Configurar cookie com o sessionId
     response.cookie('sessionId', result.sessionId, {
       httpOnly: true, // Não acessível via JavaScript
-      secure: this.isSecureRequest(request), // Só marca Secure quando a conexão é HTTPS de fato
-      sameSite: 'lax', // Envia em navegação normal; protege contra CSRF em requisições de terceiros
+      secure: isSecure, // Só marca Secure quando a conexão é HTTPS de fato
+      sameSite: isSecure ? 'none' : 'lax', // 'none' permite cross-site quando HTTPS, 'lax' para desenvolvimento local
       maxAge: 15 * 60 * 1000, // 15 minutos em milissegundos
     });
 
@@ -74,12 +76,14 @@ export class AuthController {
 
     await this.authService.logout(sessionId);
 
+    const isSecure = this.isSecureRequest(request);
+
     // Limpar o cookie usando as mesmas opções usadas no login,
     // caso contrário o navegador não consegue removê-lo.
     response.clearCookie('sessionId', {
       httpOnly: true,
-      secure: this.isSecureRequest(request),
-      sameSite: 'lax',
+      secure: isSecure,
+      sameSite: isSecure ? 'none' : 'lax',
     });
 
     return {
@@ -102,12 +106,14 @@ export class AuthController {
   ) {
     const result = await this.authService.register(createUserDto);
 
+    const isSecure = this.isSecureRequest(request);
+
     // Mesmo cookie e mesmas opções do login, com as mesmas opções o
     // navegador consegue limpar o cookie no logout.
     response.cookie('sessionId', result.sessionId, {
       httpOnly: true,
-      secure: this.isSecureRequest(request),
-      sameSite: 'lax',
+      secure: isSecure,
+      sameSite: isSecure ? 'none' : 'lax',
       maxAge: 15 * 60 * 1000,
     });
 
