@@ -37,6 +37,25 @@ export class AuthController {
     return request.protocol === 'https';
   }
 
+  /**
+   * Opções iguais no login, no cadastro e no logout. Se divergirem, o
+   * navegador guarda o cookie e depois não consegue apagá-lo.
+   *
+   * `Partitioned` entra só em HTTPS: sem isso, Safari e o navegador do
+   * WhatsApp descartam o cookie (a página está na Vercel e a API no Render)
+   * e o próximo request volta 401, que a tela mostra como sessão expirada.
+   */
+  private sessionCookieOptions(request: Request) {
+    const isSecure = this.isSecureRequest(request);
+
+    return {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: (isSecure ? 'none' : 'lax') as 'none' | 'lax',
+      partitioned: isSecure,
+    };
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -46,13 +65,8 @@ export class AuthController {
   ) {
     const result = await this.authService.login(createAuthDto);
 
-    const isSecure = this.isSecureRequest(request);
-
-    // Configurar cookie com o sessionId
     response.cookie('sessionId', result.sessionId, {
-      httpOnly: true, // Não acessível via JavaScript
-      secure: isSecure, // Só marca Secure quando a conexão é HTTPS de fato
-      sameSite: isSecure ? 'none' : 'lax', // 'none' permite cross-site quando HTTPS, 'lax' para desenvolvimento local
+      ...this.sessionCookieOptions(request),
       maxAge: 15 * 60 * 1000, // 15 minutos em milissegundos
     });
 
@@ -76,15 +90,7 @@ export class AuthController {
 
     await this.authService.logout(sessionId);
 
-    const isSecure = this.isSecureRequest(request);
-
-    // Limpar o cookie usando as mesmas opções usadas no login,
-    // caso contrário o navegador não consegue removê-lo.
-    response.clearCookie('sessionId', {
-      httpOnly: true,
-      secure: isSecure,
-      sameSite: isSecure ? 'none' : 'lax',
-    });
+    response.clearCookie('sessionId', this.sessionCookieOptions(request));
 
     return {
       mensagem: 'Logout realizado com sucesso',
@@ -106,14 +112,8 @@ export class AuthController {
   ) {
     const result = await this.authService.register(createUserDto);
 
-    const isSecure = this.isSecureRequest(request);
-
-    // Mesmo cookie e mesmas opções do login, com as mesmas opções o
-    // navegador consegue limpar o cookie no logout.
     response.cookie('sessionId', result.sessionId, {
-      httpOnly: true,
-      secure: isSecure,
-      sameSite: isSecure ? 'none' : 'lax',
+      ...this.sessionCookieOptions(request),
       maxAge: 15 * 60 * 1000,
     });
 
